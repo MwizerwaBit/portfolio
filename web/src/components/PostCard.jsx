@@ -34,7 +34,7 @@ export default function PostCard({ post }) {
       )}
       <div className="post-footer">
         <Link to={`/blog/${post.slug}`} className="link">
-          Read →
+          Read <span className="post-link-arrow" aria-hidden="true">→</span>
         </Link>
       </div>
     </article>

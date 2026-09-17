@@ -89,8 +89,14 @@ export default function Home() {
               {featured.map((project, i) => (
                 <Reveal key={project.slug} delay={(i % 3) * 60}>
                   <article className="project-card">
-                    <div className={`project-media g${i % 4}`} aria-hidden="true">
-                      {project.title.charAt(0).toUpperCase()}
+                    <div
+                      className={`project-media g${i % 4}`}
+                      data-letter={project.title.charAt(0).toUpperCase()}
+                      aria-hidden="true"
+                    >
+                      <span className="project-media-monogram">
+                        {project.title.charAt(0).toUpperCase()}
+                      </span>
                     </div>
                     <div className="project-body">
                       <h3 className="project-title">{project.title}</h3>
