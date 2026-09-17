@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import ThemeToggle from './ThemeToggle.jsx'
 import ScrollProgress from './ScrollProgress.jsx'
@@ -15,6 +15,22 @@ export default function Layout() {
   const [open, setOpen] = useState(false)
   const location = useLocation()
   const drawerRef = useRef(null)
+  const toggleRef = useRef(null)
+  const closeRef = useRef(null)
+
+  // Close the drawer and return focus to the menu trigger. Used by the close
+  // button, the overlay and Escape — not by in-drawer navigation (a nav link
+  // click should leave focus to follow the route change).
+  const closeDrawer = useCallback(() => {
+    setOpen(false)
+    toggleRef.current?.focus()
+  }, [])
+
+  // Move focus into the drawer when it opens so keyboard / screen-reader
+  // users aren't stranded behind the overlay.
+  useEffect(() => {
+    if (open) closeRef.current?.focus()
+  }, [open])
 
   // Keep the off-screen drawer out of the tab order while closed.
   useEffect(() => {
@@ -31,7 +47,7 @@ export default function Layout() {
   useEffect(() => {
     if (!open) return
     const onKey = (e) => {
-      if (e.key === 'Escape') setOpen(false)
+      if (e.key === 'Escape') closeDrawer()
     }
     document.addEventListener('keydown', onKey)
     document.body.style.overflow = 'hidden'
@@ -39,7 +55,7 @@ export default function Layout() {
       document.removeEventListener('keydown', onKey)
       document.body.style.overflow = ''
     }
-  }, [open])
+  }, [open, closeDrawer])
 
   return (
     <>
@@ -69,6 +85,7 @@ export default function Layout() {
           <div className="header-actions">
             <ThemeToggle />
             <button
+              ref={toggleRef}
               className="nav-toggle"
               aria-expanded={open}
               aria-controls="mobile-nav"
@@ -85,7 +102,7 @@ export default function Layout() {
 
       <div
         className={`nav-overlay${open ? ' open' : ''}`}
-        onClick={() => setOpen(false)}
+        onClick={closeDrawer}
         aria-hidden="true"
       />
 
@@ -93,6 +110,7 @@ export default function Layout() {
         ref={drawerRef}
         id="mobile-nav"
         className={`nav-drawer${open ? ' open' : ''}`}
+        role="dialog"
         aria-label="Mobile navigation"
       >
         <div className="nav-drawer-head">
@@ -103,10 +121,10 @@ export default function Layout() {
             <span>MwizerwaBit</span>
           </span>
           <button
-            className="nav-toggle"
-            aria-expanded="true"
+            ref={closeRef}
+            className="nav-toggle is-close"
             aria-label="Close menu"
-            onClick={() => setOpen(false)}
+            onClick={closeDrawer}
           >
             <span className="bar" />
             <span className="bar" />

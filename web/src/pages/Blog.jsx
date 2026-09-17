@@ -79,7 +79,11 @@ export default function Blog() {
             )}
           </div>
 
-          {error && <p className="empty error">Couldn't reach the backend: {error}</p>}
+          {error && (
+            <p className="empty error" role="alert">
+              Couldn't reach the backend: {error}
+            </p>
+          )}
 
           {posts === null && !error ? (
             <div className="posts">

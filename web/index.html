@@ -13,13 +13,19 @@
       content="Portfolio and blog of MwizerwaBit — building SaaS products end-to-end with FastAPI, Postgres, React, and Flutter, following Apple's Human Interface Guidelines."
     />
     <meta name="author" content="MwizerwaBit" />
-    <link rel="preconnect" href="http://localhost:8000" />
-    <link rel="dns-prefetch" href="http://localhost:8000" />
+    <!-- The API is served same-origin at /api/v1 (Vite proxy in dev, reverse
+         proxy in prod), so there is no cross-origin host to preconnect. -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="MwizerwaBit" />
     <meta property="og:title" content="MwizerwaBit — Full-stack SaaS engineer" />
     <meta
       property="og:description"
+      content="Portfolio and blog: FastAPI + Postgres backends, React web apps, and Flutter mobile apps — built to Apple's Human Interface Guidelines."
+    />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="MwizerwaBit — Full-stack SaaS engineer" />
+    <meta
+      name="twitter:description"
       content="Portfolio and blog: FastAPI + Postgres backends, React web apps, and Flutter mobile apps — built to Apple's Human Interface Guidelines."
     />
 

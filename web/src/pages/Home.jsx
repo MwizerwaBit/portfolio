@@ -65,7 +65,7 @@ export default function Home() {
 
       {error && (
         <div className="container">
-          <p className="empty error">
+          <p className="empty error" role="alert">
             Couldn't reach the backend: {error}. Start it with{' '}
             <code className="inline-code">uvicorn app.main:app --reload</code>.
           </p>

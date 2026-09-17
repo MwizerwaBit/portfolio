@@ -1711,3 +1711,19 @@ button {
     background: var(--bg-subtle);
   }
 }
+
+/* ==========================================================================
+   Accessibility upgrade (appended — do not rewrite the rules above)
+   ========================================================================== */
+
+/* Drawer close button renders the same "X" as the open toggle without relying
+   on aria-expanded (a close button should not announce itself as expanded). */
+.nav-toggle.is-close .bar:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+.nav-toggle.is-close .bar:nth-child(2) {
+  opacity: 0;
+}
+.nav-toggle.is-close .bar:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}

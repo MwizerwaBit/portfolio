@@ -40,11 +40,59 @@ function highlight(src) {
   })
 }
 
-// Custom code renderer for `marked` v12 (positional `code(text, lang)`).
+// Block executable / risky URL schemes before they ever reach an attribute.
+const DANGEROUS_SCHEME = /^(javascript|vbscript):/i
+const SAFE_ABSOLUTE = /^(https?|mailto|tel):/i
+
+/** Reject unsafe URLs and URLs with non-http(s) absolute schemes. */
+function sanitizeUrl(href, { allowDataImage = false } = {}) {
+  const cleaned = (href || '').trim()
+  if (!cleaned) return null
+  if (DANGEROUS_SCHEME.test(cleaned)) return null
+  if (/^data:/i.test(cleaned)) {
+    return allowDataImage && /^data:image\//i.test(cleaned) ? cleaned : null
+  }
+  if (/^[a-z][a-z0-9+.-]*:/i.test(cleaned) && !SAFE_ABSOLUTE.test(cleaned)) {
+    return null
+  }
+  return cleaned
+}
+
+// Percent-encode the URL (spaces, quotes, etc.) without re-encoding any
+// existing percent-sequences — mirrors marked's own cleanUrl.
+function encodeUrl(href) {
+  try {
+    return encodeURI(href).replace(/%25/g, '%')
+  } catch {
+    return null
+  }
+}
+
+// Custom renderers for `marked` v12 (positional arguments). The `code`
+// renderer highlights fenced blocks; `link`/`image` sanitize URLs, add
+// `rel="noopener noreferrer"` to external links, and lazy-load images.
 const renderer = {
-  code(code, lang) {
-    const inner = HIGHLIGHTABLE.test(lang || '') ? highlight(code) : escapeHtml(code)
-    return `<pre><code class="language-${escapeHtml(lang || '')}">${inner}</code></pre>`
+  code(code, infostring) {
+    const lang = ((infostring || '').match(/^\S*/) || [''])[0]
+    const inner = HIGHLIGHTABLE.test(lang) ? highlight(code) : escapeHtml(code)
+    return `<pre><code class="language-${escapeHtml(lang)}">${inner}</code></pre>`
+  },
+  link(href, title, text) {
+    const safe = sanitizeUrl(href)
+    if (!safe) return text
+    const encoded = encodeUrl(safe)
+    if (encoded === null) return text
+    const rel = /^https?:\/\//i.test(encoded) ? ' rel="noopener noreferrer"' : ''
+    const titleAttr = title ? ` title="${escapeHtml(title)}"` : ''
+    return `<a href="${escapeHtml(encoded)}"${titleAttr}${rel}>${text}</a>`
+  },
+  image(href, title, text) {
+    const safe = sanitizeUrl(href, { allowDataImage: true })
+    if (!safe) return escapeHtml(text)
+    const encoded = encodeUrl(safe)
+    if (encoded === null) return escapeHtml(text)
+    const titleAttr = title ? ` title="${escapeHtml(title)}"` : ''
+    return `<img src="${escapeHtml(encoded)}" alt="${escapeHtml(text)}"${titleAttr} loading="lazy" decoding="async">`
   },
 }
 

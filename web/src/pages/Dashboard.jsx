@@ -106,8 +106,16 @@ export default function Dashboard() {
 
       <section className="section">
         <div className="container">
-          {error && <p className="empty error">Error: {error}</p>}
-          {notice && <p className="empty notice">{notice}</p>}
+          {error && (
+            <p className="empty error" role="alert">
+              Error: {error}
+            </p>
+          )}
+          {notice && (
+            <p className="empty notice" role="status">
+              {notice}
+            </p>
+          )}
 
           {stats ? (
             <div className="stat-grid">

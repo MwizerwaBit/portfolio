@@ -87,7 +87,9 @@ export default function BlogPost() {
   if (error) {
     return (
       <div className="container section">
-        <p className="empty error">Couldn't load this post: {error}</p>
+        <p className="empty error" role="alert">
+          Couldn't load this post: {error}
+        </p>
         <Link to="/blog" className="section-link">
           ← Back to blog
         </Link>
@@ -143,7 +145,11 @@ export default function BlogPost() {
             >
               {bookmarked ? '★ Bookmarked' : '☆ Bookmark'}
             </button>
-            {copied && <span className="notice">Link copied</span>}
+            {copied && (
+              <span className="notice" role="status">
+                Link copied
+              </span>
+            )}
           </div>
         </header>
         <div className="article-body">

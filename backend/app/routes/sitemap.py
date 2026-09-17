@@ -1,6 +1,7 @@
 """XML sitemap listing the public pages and published posts."""
 
 from html import escape
+from urllib.parse import quote
 
 from fastapi import APIRouter, Depends
 from fastapi.responses import Response
@@ -16,14 +17,19 @@ router = APIRouter()
 
 @router.get("/sitemap.xml")
 def sitemap(db: Session = Depends(get_db)) -> Response:
-    """Return a sitemap.xml for the home, blog, dashboard, and post pages."""
-    paths = ["/", "/blog", "/dashboard"]
+    """Return a sitemap.xml for the home, blog, and published post pages.
+
+    The dashboard is an admin route and is intentionally omitted so crawlers
+    aren't pointed at a content-management surface.
+    """
+    base = settings.app_url.rstrip("/")
+    paths = ["/", "/blog"]
 
     posts = db.scalars(select(Post).where(Post.published == True)).all()  # noqa: E712
-    paths.extend(f"/blog/{post.slug}" for post in posts)
+    paths.extend(f"/blog/{quote(post.slug, safe='')}" for post in posts)
 
     entries = "\n".join(
-        f"  <url><loc>{escape(f'{settings.app_url}{path}', quote=False)}</loc></url>"
+        f"  <url><loc>{escape(f'{base}{path}', quote=False)}</loc></url>"
         for path in paths
     )
 
@@ -34,4 +40,4 @@ def sitemap(db: Session = Depends(get_db)) -> Response:
         "</urlset>\n"
     )
 
-    return Response(content=body, media_type="application/xml")
+    return Response(content=body, media_type="application/xml; charset=utf-8")
