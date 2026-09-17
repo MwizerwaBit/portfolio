@@ -1,29 +1,183 @@
-import { Link, NavLink, Outlet } from 'react-router-dom'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
+import ThemeToggle from './ThemeToggle.jsx'
+import ScrollProgress from './ScrollProgress.jsx'
 
-const navLink = ({ isActive }) => `nav-link${isActive ? ' active' : ''}`
+const LINKS = [
+  { to: '/', label: 'Portfolio', end: true },
+  { to: '/blog', label: 'Blog', end: false },
+  { to: '/dashboard', label: 'Dashboard', end: false },
+]
+
+const navClass = ({ isActive }) => `nav-link${isActive ? ' active' : ''}`
 
 export default function Layout() {
+  const [open, setOpen] = useState(false)
+  const location = useLocation()
+  const drawerRef = useRef(null)
+  const toggleRef = useRef(null)
+  const closeRef = useRef(null)
+
+  // Close the drawer and return focus to the menu trigger. Used by the close
+  // button, the overlay and Escape — not by in-drawer navigation (a nav link
+  // click should leave focus to follow the route change).
+  const closeDrawer = useCallback(() => {
+    setOpen(false)
+    toggleRef.current?.focus()
+  }, [])
+
+  // Move focus into the drawer when it opens so keyboard / screen-reader
+  // users aren't stranded behind the overlay.
+  useEffect(() => {
+    if (open) closeRef.current?.focus()
+  }, [open])
+
+  // Keep the off-screen drawer out of the tab order while closed.
+  useEffect(() => {
+    if (drawerRef.current) drawerRef.current.inert = !open
+  }, [open])
+
+  // Close the drawer and jump to the top on every route change.
+  useEffect(() => {
+    setOpen(false)
+    window.scrollTo({ top: 0, behavior: 'instant' })
+  }, [location.pathname])
+
+  // Escape closes the drawer; body scroll is locked while it's open.
+  useEffect(() => {
+    if (!open) return
+    const onKey = (e) => {
+      if (e.key === 'Escape') closeDrawer()
+    }
+    document.addEventListener('keydown', onKey)
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.removeEventListener('keydown', onKey)
+      document.body.style.overflow = ''
+    }
+  }, [open, closeDrawer])
+
   return (
-    <div className="page">
-      <header className="site-header">
-        <Link to="/" className="brand">
-          MwizerwaBit
-        </Link>
-        <nav className="nav">
-          <NavLink to="/" end className={navLink}>
-            Portfolio
-          </NavLink>
-          <NavLink to="/blog" className={navLink}>
-            Blog
-          </NavLink>
-          <NavLink to="/dashboard" className={navLink}>
-            Dashboard
-          </NavLink>
-        </nav>
+    <>
+      <a className="skip-link" href="#main">
+        Skip to content
+      </a>
+
+      <ScrollProgress />
+
+      <header className="app-header">
+        <div className="container header-inner">
+          <Link to="/" className="brand" aria-label="MwizerwaBit home">
+            <span className="brand-mark" aria-hidden="true">
+              M
+            </span>
+            <span>MwizerwaBit</span>
+          </Link>
+
+          <nav className="nav-desktop" aria-label="Primary">
+            {LINKS.map((l) => (
+              <NavLink key={l.to} to={l.to} end={l.end} className={navClass}>
+                {l.label}
+              </NavLink>
+            ))}
+          </nav>
+
+          <div className="header-actions">
+            <ThemeToggle />
+            <button
+              ref={toggleRef}
+              className="nav-toggle"
+              aria-expanded={open}
+              aria-controls="mobile-nav"
+              aria-label={open ? 'Close menu' : 'Open menu'}
+              onClick={() => setOpen((v) => !v)}
+            >
+              <span className="bar" />
+              <span className="bar" />
+              <span className="bar" />
+            </button>
+          </div>
+        </div>
       </header>
-      <main className="content">
+
+      <div
+        className={`nav-overlay${open ? ' open' : ''}`}
+        onClick={closeDrawer}
+        aria-hidden="true"
+      />
+
+      <aside
+        ref={drawerRef}
+        id="mobile-nav"
+        className={`nav-drawer${open ? ' open' : ''}`}
+        role="dialog"
+        aria-label="Mobile navigation"
+      >
+        <div className="nav-drawer-head">
+          <span className="brand">
+            <span className="brand-mark" aria-hidden="true">
+              M
+            </span>
+            <span>MwizerwaBit</span>
+          </span>
+          <button
+            ref={closeRef}
+            className="nav-toggle is-close"
+            aria-label="Close menu"
+            onClick={closeDrawer}
+          >
+            <span className="bar" />
+            <span className="bar" />
+            <span className="bar" />
+          </button>
+        </div>
+        <nav className="nav-drawer-nav" aria-label="Mobile primary">
+          {LINKS.map((l) => (
+            <NavLink
+              key={l.to}
+              to={l.to}
+              end={l.end}
+              className={navClass}
+              onClick={() => setOpen(false)}
+            >
+              {l.label}
+            </NavLink>
+          ))}
+        </nav>
+      </aside>
+
+      <main id="main" className="route" key={location.pathname}>
         <Outlet />
       </main>
-    </div>
+
+      <footer className="footer">
+        <div className="container footer-inner">
+          <div className="footer-brand">
+            <Link to="/" className="brand" aria-label="MwizerwaBit home">
+              <span className="brand-mark" aria-hidden="true">
+                M
+              </span>
+              <span>MwizerwaBit</span>
+            </Link>
+            <p className="footer-tagline">
+              SaaS products, built end-to-end with FastAPI, Postgres, React, and Flutter.
+            </p>
+          </div>
+          <nav className="footer-nav" aria-label="Footer">
+            {LINKS.map((l) => (
+              <NavLink key={l.to} to={l.to} end={l.end} className={navClass}>
+                {l.label}
+              </NavLink>
+            ))}
+            <a className="nav-link" href="/feed.xml">
+              RSS
+            </a>
+          </nav>
+          <p className="footer-copy">
+            © {new Date().getFullYear()} MwizerwaBit. All rights reserved.
+          </p>
+        </div>
+      </footer>
+    </>
   )
 }
