@@ -13,20 +13,6 @@ function currentTheme() {
 export default function useTheme() {
   const [theme, setTheme] = useState(currentTheme)
 
-  useEffect(() => {
-    const mq = window.matchMedia('(prefers-color-scheme: dark)')
-    const onChange = (e) => {
-      // Follow the system only while the user hasn't made an explicit choice.
-      try {
-        if (!localStorage.getItem('theme')) setTheme(e.matches ? 'dark' : 'light')
-      } catch {
-        setTheme(e.matches ? 'dark' : 'light')
-      }
-    }
-    mq.addEventListener('change', onChange)
-    return () => mq.removeEventListener('change', onChange)
-  }, [])
-
   const set = useCallback((next) => {
     document.documentElement.dataset.theme = next
     try {
@@ -36,6 +22,23 @@ export default function useTheme() {
     }
     setTheme(next)
   }, [])
+
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-color-scheme: dark)')
+    const onChange = (e) => {
+      // Follow the system only while the user hasn't made an explicit choice.
+      // `set` updates the <html> data-theme attribute (CSS variables) as well
+      // as React state — without it the page colors would stay on the old theme
+      // while the toggle icon flipped to the new one.
+      try {
+        if (!localStorage.getItem('theme')) set(e.matches ? 'dark' : 'light')
+      } catch {
+        set(e.matches ? 'dark' : 'light')
+      }
+    }
+    mq.addEventListener('change', onChange)
+    return () => mq.removeEventListener('change', onChange)
+  }, [set])
 
   const toggle = useCallback(() => {
     set(theme === 'dark' ? 'light' : 'dark')
