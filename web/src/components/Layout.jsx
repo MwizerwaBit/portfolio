@@ -26,15 +26,14 @@ export default function Layout() {
     toggleRef.current?.focus()
   }, [])
 
-  // Move focus into the drawer when it opens so keyboard / screen-reader
-  // users aren't stranded behind the overlay.
-  useEffect(() => {
-    if (open) closeRef.current?.focus()
-  }, [open])
-
-  // Keep the off-screen drawer out of the tab order while closed.
+  // Keep the off-screen drawer out of the tab order while closed, and move
+  // focus into it when it opens so keyboard / screen-reader users aren't
+  // stranded behind the overlay. `inert` must be cleared *before* focusing —
+  // focusing an inert subtree is a silent no-op, so the two must not be split
+  // across effects.
   useEffect(() => {
     if (drawerRef.current) drawerRef.current.inert = !open
+    if (open) closeRef.current?.focus()
   }, [open])
 
   // Close the drawer and jump to the top on every route change.

@@ -3,7 +3,7 @@
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -24,7 +24,10 @@ def list_posts(
     published: bool | None = None, db: Session = Depends(get_db)
 ) -> list[Post]:
     """List posts, newest first. Optionally filter by published state."""
-    stmt = select(Post).order_by(Post.created_at.desc())
+    # Order by publication date (falling back to creation date for unpublished
+    # posts), so the blog index and home "recent posts" show the newest
+    # *published* post first — not whatever order the rows were inserted in.
+    stmt = select(Post).order_by(func.coalesce(Post.published_at, Post.created_at).desc())
     if published is not None:
         stmt = stmt.where(Post.published == published)
     return list(db.scalars(stmt).all())
