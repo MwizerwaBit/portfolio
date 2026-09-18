@@ -8,7 +8,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app import seed
+from app import migrate, seed
 from app.config import settings
 from app.database import Base, SessionLocal, engine
 from app.routes import dashboard, feed, posts, projects, sitemap
@@ -19,6 +19,7 @@ async def lifespan(app: FastAPI):
     # Create tables and seed starter content on startup (SQLite for local dev;
     # swap DATABASE_URL + Alembic for Postgres in production).
     Base.metadata.create_all(bind=engine)
+    migrate.migrate(engine)  # add columns the ORM added after the DB was created
     with SessionLocal() as db:
         seed.seed(db)
     yield
